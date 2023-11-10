@@ -1,0 +1,17 @@
+name: Chocolatey OpenBve
+on: [push]
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Package
+        run: choco pack
+      - name: Test Install
+        run: choco install openbve -dv -s . -y
+      - name: Test Upgrade
+        run: |
+          choco install au
+          Test-Package
+      - name: Test Uninstall
+        run: choco uninstall openbve
