@@ -1,0 +1,45 @@
+- name: Update OpenBVE Chocolatey Package
+  hosts: localhost
+  vars:
+    nuspec_file: "{{ playbook_dir }}/openbve.nuspec"
+    install_script: "{{ playbook_dir }}/tools/chocolateyinstall.ps1"
+    github_path: "leezer3/OpenBVE"
+  tasks:
+    - name: Retrieve GitHub Token
+      ansible.builtin.include_vars:
+        file: "github.yaml"
+        name: github
+    - name: Retrieve latest OpenBVE version
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/{{ github_path }}/tags
+        headers:
+          X-GitHub-Api-Version: "2022-11-28"
+          Authorization: "Bearer {{ github.github_token }}"
+        status_code: 200
+      register: release_tags
+    - name: Check if package is already latest version
+      ansible.builtin.lineinfile:
+        path: "{{ nuspec_file }}"
+        regexp: '^\s+<version>'
+        line: "    <version>{{ release_tags.json[0].name }}</version>"
+        state: present
+    - name: Change release notes
+      ansible.builtin.lineinfile:
+        path: "{{ nuspec_file }}"
+        regexp: '    https://openbve-project\.net/intro/'
+        line: "    https://openbve-project.net/intro/V{{ release_tags.json[0].name }}/"
+    - name: Download Latest Version
+      ansible.builtin.get_url:
+        url: "https://github.com/{{ github_path }}/releases/download/{{ release_tags.json[0].name }}/OpenBve-{{ release_tags.json[0].name }}.zip"
+        dest: "{{ playbook_dir }}/OpenBVE-{{ release_tags.json[0].name }}.zip"
+        mode: "0440"
+    - name: Hash Latest Version
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/OpenBVE-{{ release_tags.json[0].name }}.zip"
+        checksum_algorithm: sha256
+      register: zip_hash
+    - name: Update Hash in Install Script
+      ansible.builtin.lineinfile:
+        path: "{{ install_script }}"
+        regexp: '^\$checksum = '
+        line: '$checksum = "{{ zip_hash.stat.checksum }}"'
