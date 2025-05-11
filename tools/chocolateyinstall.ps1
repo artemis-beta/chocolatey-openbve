@@ -1,6 +1,6 @@
 ﻿
 $ErrorActionPreference = 'Stop';
-$checksum = "4538223d977dec84479fbe149d3818da031d4fb8dc6b1628706697787ae37e8d"
+$checksum = "f329456a62cdb7dc15a5385fd35acd3b71098388763e29b11c833743706931f3"
 $repository = "leezer3/OpenBve"
 $software_name = "OpenBve"
 
